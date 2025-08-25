@@ -1,0 +1,10 @@
+# Global ignores for this monorepo
+**/.DS_Store
+**/.idea/
+**/.vscode/
+**/target/
+**/build/
+**/.classpath
+**/.project
+**/.settings/
+**/.env
