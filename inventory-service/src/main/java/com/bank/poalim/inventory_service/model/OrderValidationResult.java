@@ -1,0 +1,49 @@
+package com.bank.poalim.inventory_service.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderValidationResult {
+    private String orderId;
+    private boolean approved;
+    private List<ValidationIssue> issues;
+    private List<ValidatedItem> validatedItems;
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ValidationIssue {
+        private String productId;
+        private String reason;
+        private ValidationIssueType type;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ValidatedItem {
+        private String productId;
+        private Integer requestedQuantity;
+        private Integer availableQuantity;
+        private OrderItemCategory category;
+        private boolean available;
+    }
+    
+    public enum ValidationIssueType {
+        PRODUCT_NOT_FOUND,
+        INSUFFICIENT_QUANTITY,
+        EXPIRED_PRODUCT,
+        INVALID_CATEGORY,
+        PRODUCT_INACTIVE
+    }
+}
