@@ -4,6 +4,9 @@ import com.bank.poalim.order_service.dto.CreateOrderRequestDto;
 import com.bank.poalim.order_service.dto.OrderResponseDto;
 import com.bank.poalim.order_service.event.OrderCreatedEvent;
 import com.bank.poalim.order_service.kafka.OrderEventProducer;
+import com.bank.poalim.order_service.model.OrderRecord;
+import com.bank.poalim.order_service.model.OrderStatus;
+import com.bank.poalim.order_service.store.PendingOrderStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +20,7 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
     
     private final OrderEventProducer orderEventProducer;
+    private final PendingOrderStore pendingOrderStore;
     
     @Override
     public OrderResponseDto createOrder(CreateOrderRequestDto request) {
@@ -26,16 +30,27 @@ public class OrderServiceImpl implements OrderService {
         String orderId = UUID.randomUUID().toString();
         Instant createdAt = Instant.now();
         
-        // Create the response
+        // Save PENDING order in Redis with TTL
+        OrderRecord record = OrderRecord.builder()
+                .orderId(orderId)
+                .customerName(request.getCustomerName())
+                .items(request.getItems())
+                .requestedAt(request.getRequestedAt())
+                .createdAt(createdAt)
+                .status(OrderStatus.PENDING)
+                .build();
+        pendingOrderStore.savePending(record);
+        
+        // Create the response (reflect current PENDING status)
         OrderResponseDto response = new OrderResponseDto();
         response.setOrderId(orderId);
         response.setCustomerName(request.getCustomerName());
         response.setItems(request.getItems());
         response.setRequestedAt(request.getRequestedAt());
         response.setCreatedAt(createdAt);
-        response.setStatus("CREATED");
+        response.setStatus("PENDING");
         
-        log.info("Order created successfully with ID: {}", orderId);
+        log.info("Order saved as PENDING with ID: {}", orderId);
         
         // Publish order created event to Kafka
         try {
@@ -43,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
                     .orderId(orderId)
                     .customerName(request.getCustomerName())
                     .items(request.getItems())
-                    .requestedAt(request.getRequestedAt())
+                    .requestedAt(createdAt.isAfter(request.getRequestedAt()) ? request.getRequestedAt() : request.getRequestedAt())
                     .createdAt(createdAt)
                     .status("CREATED")
                     .build();
@@ -52,8 +67,7 @@ public class OrderServiceImpl implements OrderService {
             log.info("Order created event published to Kafka for order ID: {}", orderId);
         } catch (Exception e) {
             log.error("Failed to publish order created event to Kafka for order ID: {}", orderId, e);
-            // Note: We don't fail the order creation if Kafka publishing fails
-            // In a production environment, you might want to implement retry logic or dead letter queues
+            // order remains PENDING in Redis until it expires or is processed via retry
         }
         
         return response;
