@@ -10,5 +10,8 @@ compose_logs:
 run_order_service:
 	SPRING_PROFILES_ACTIVE=docker ./order-service/mvnw spring-boot:run -f ./order-service/pom.xml
 
+run_inventory_service:
+	SPRING_PROFILES_ACTIVE=docker ./inventory-service/mvnw spring-boot:run -f ./inventory-service/pom.xml
+
 seed_topics:
 	docker exec -it kafka /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic order-created --partitions 3 --replication-factor 1
