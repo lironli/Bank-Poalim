@@ -3,6 +3,7 @@ package com.bank.poalim.order_service.controller;
 import com.bank.poalim.order_service.dto.CreateOrderRequestDto;
 import com.bank.poalim.order_service.dto.OrderItemDto;
 import com.bank.poalim.order_service.dto.OrderResponseDto;
+import com.bank.poalim.order_service.model.OrderItemCategory;
 import com.bank.poalim.order_service.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ class OrderControllerTest {
         OrderItemDto item = new OrderItemDto();
         item.setProductId("P1001");
         item.setQuantity(2);
-        item.setCategory("standard");
+        item.setCategory(OrderItemCategory.STANDARD);
         request.setItems(List.of(item));
         
         OrderResponseDto response = new OrderResponseDto();

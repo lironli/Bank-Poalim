@@ -20,6 +20,8 @@ Creates a new order.
 
 **Content-Type:** `application/json`
 
+Allowed item categories: `standard`, `perishable`, `digital`
+
 **Request Body:**
 ```json
 {
@@ -49,7 +51,7 @@ Creates a new order.
 |-------|------|----------|-------------|
 | `productId` | String | Yes | Unique identifier for the product |
 | `quantity` | Integer | Yes | Quantity of the product (must be positive) |
-| `category` | String | Yes | Category of the product |
+| `category` | Enum | Yes | One of `standard`, `perishable`, `digital` |
 
 #### Response
 
@@ -198,15 +200,23 @@ src/
 │   │       │   └── OrderResponseDto.java         # Response DTO
 │   │       ├── event/
 │   │       │   └── OrderCreatedEvent.java        # Kafka event DTO
+│   │       ├── model/
+│   │       │   ├── OrderItemCategory.java        # Item category enum
+│   │       │   ├── OrderRecord.java              # Pending order record
+│   │       │   └── OrderStatus.java              # Order status enum
 │   │       ├── exception/
 │   │       │   └── GlobalExceptionHandler.java   # Global error handling
 │   │       ├── kafka/
 │   │       │   └── OrderEventProducer.java       # Kafka producer service
 │   │       ├── config/
-│   │       │   └── KafkaConfig.java              # Kafka configuration
+│   │       │   ├── KafkaConfig.java              # Kafka configuration
+│   │       │   └── RedisConfig.java              # Redis reactive configuration
 │   │       ├── service/
 │   │       │   ├── OrderService.java             # Service interface
 │   │       │   └── OrderServiceImpl.java         # Service implementation
+│   │       ├── store/
+│   │       │   ├── PendingOrderStore.java        # Store abstraction
+│   │       │   └── RedisPendingOrderStore.java   # Redis implementation
 │   │       └── OrderServiceApplication.java      # Main application class
 │   └── resources/
 │       └── application.properties                # Application configuration
