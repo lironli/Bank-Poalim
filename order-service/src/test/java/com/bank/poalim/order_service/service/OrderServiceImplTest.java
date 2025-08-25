@@ -5,6 +5,8 @@ import com.bank.poalim.order_service.dto.OrderItemDto;
 import com.bank.poalim.order_service.dto.OrderResponseDto;
 import com.bank.poalim.order_service.event.OrderCreatedEvent;
 import com.bank.poalim.order_service.kafka.OrderEventProducer;
+import com.bank.poalim.order_service.model.OrderRecord;
+import com.bank.poalim.order_service.store.PendingOrderStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,18 +31,25 @@ class OrderServiceImplTest {
     @Mock
     private OrderEventProducer orderEventProducer;
     
+    @Mock
+    private PendingOrderStore pendingOrderStore;
+    
     @Captor
     private ArgumentCaptor<OrderCreatedEvent> eventCaptor;
+    
+    @Captor
+    private ArgumentCaptor<OrderRecord> recordCaptor;
     
     private OrderServiceImpl orderService;
     
     @BeforeEach
     void setUp() {
-        orderService = new OrderServiceImpl(orderEventProducer);
+        orderService = new OrderServiceImpl(orderEventProducer, pendingOrderStore);
+        ReflectionTestUtils.setField(orderService, "pendingTtlSeconds", 600L);
     }
     
     @Test
-    void createOrder_ValidRequest_PublishesEventToKafka() {
+    void createOrder_ValidRequest_SavesPendingAndPublishesEvent() {
         // Given
         CreateOrderRequestDto request = new CreateOrderRequestDto();
         request.setCustomerName("Alice");
@@ -60,8 +71,15 @@ class OrderServiceImplTest {
         assertNotNull(response);
         assertNotNull(response.getOrderId());
         assertEquals("Alice", response.getCustomerName());
-        assertEquals("CREATED", response.getStatus());
+        assertEquals("PENDING", response.getStatus());
         assertNotNull(response.getCreatedAt());
+        
+        // Verify pending save
+        verify(pendingOrderStore).savePending(recordCaptor.capture(), eq(600L));
+        OrderRecord saved = recordCaptor.getValue();
+        assertEquals(response.getOrderId(), saved.getOrderId());
+        assertEquals("Alice", saved.getCustomerName());
+        assertNotNull(saved.getStatus());
         
         // Verify Kafka event was published
         verify(orderEventProducer).publishOrderCreatedEvent(eventCaptor.capture());
@@ -75,7 +93,7 @@ class OrderServiceImplTest {
     }
     
     @Test
-    void createOrder_KafkaPublishFails_StillReturnsOrder() {
+    void createOrder_KafkaPublishFails_StillReturnsPendingAndSaves() {
         // Given
         CreateOrderRequestDto request = new CreateOrderRequestDto();
         request.setCustomerName("Alice");
@@ -97,8 +115,10 @@ class OrderServiceImplTest {
         assertNotNull(response);
         assertNotNull(response.getOrderId());
         assertEquals("Alice", response.getCustomerName());
-        assertEquals("CREATED", response.getStatus());
+        assertEquals("PENDING", response.getStatus());
         
+        // Verify pending save attempted
+        verify(pendingOrderStore).savePending(any(OrderRecord.class), eq(600L));
         // Verify Kafka event was attempted
         verify(orderEventProducer).publishOrderCreatedEvent(any(OrderCreatedEvent.class));
     }
