@@ -9,7 +9,6 @@ import com.bank.poalim.order_service.model.OrderStatus;
 import com.bank.poalim.order_service.store.PendingOrderStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -22,9 +21,6 @@ public class OrderServiceImpl implements OrderService {
     
     private final OrderEventProducer orderEventProducer;
     private final PendingOrderStore pendingOrderStore;
-    
-    @Value("${orders.pending.ttl-seconds:600}")
-    private long pendingTtlSeconds;
     
     @Override
     public OrderResponseDto createOrder(CreateOrderRequestDto request) {
@@ -43,7 +39,7 @@ public class OrderServiceImpl implements OrderService {
                 .createdAt(createdAt)
                 .status(OrderStatus.PENDING)
                 .build();
-        pendingOrderStore.savePending(record, pendingTtlSeconds);
+        pendingOrderStore.savePending(record);
         
         // Create the response (reflect current PENDING status)
         OrderResponseDto response = new OrderResponseDto();
@@ -54,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
         response.setCreatedAt(createdAt);
         response.setStatus("PENDING");
         
-        log.info("Order saved as PENDING with ID: {} (TTL {}s)", orderId, pendingTtlSeconds);
+        log.info("Order saved as PENDING with ID: {}", orderId);
         
         // Publish order created event to Kafka
         try {

@@ -14,7 +14,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +43,6 @@ class OrderServiceImplTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderServiceImpl(orderEventProducer, pendingOrderStore);
-        ReflectionTestUtils.setField(orderService, "pendingTtlSeconds", 600L);
     }
     
     @Test
@@ -75,7 +72,7 @@ class OrderServiceImplTest {
         assertNotNull(response.getCreatedAt());
         
         // Verify pending save
-        verify(pendingOrderStore).savePending(recordCaptor.capture(), eq(600L));
+        verify(pendingOrderStore).savePending(recordCaptor.capture());
         OrderRecord saved = recordCaptor.getValue();
         assertEquals(response.getOrderId(), saved.getOrderId());
         assertEquals("Alice", saved.getCustomerName());
@@ -118,7 +115,7 @@ class OrderServiceImplTest {
         assertEquals("PENDING", response.getStatus());
         
         // Verify pending save attempted
-        verify(pendingOrderStore).savePending(any(OrderRecord.class), eq(600L));
+        verify(pendingOrderStore).savePending(any(OrderRecord.class));
         // Verify Kafka event was attempted
         verify(orderEventProducer).publishOrderCreatedEvent(any(OrderCreatedEvent.class));
     }

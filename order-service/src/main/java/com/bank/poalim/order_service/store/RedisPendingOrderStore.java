@@ -17,11 +17,11 @@ public class RedisPendingOrderStore implements PendingOrderStore {
     private final ReactiveRedisTemplate<String, OrderRecord> orderReactiveRedisTemplate;
     
     @Override
-    public void savePending(OrderRecord orderRecord, long ttlSeconds) {
+    public void savePending(OrderRecord orderRecord) {
         String key = key(orderRecord.getOrderId());
         orderReactiveRedisTemplate.opsForValue()
-                .set(key, orderRecord, Duration.ofSeconds(ttlSeconds))
-                .doOnSuccess(saved -> log.info("Saved pending order {} with TTL {}s", orderRecord.getOrderId(), ttlSeconds))
+                .set(key, orderRecord)
+                .doOnSuccess(saved -> log.info("Saved pending order {}", orderRecord.getOrderId()))
                 .doOnError(err -> log.error("Failed to save pending order {}", orderRecord.getOrderId(), err))
                 .onErrorResume(e -> Mono.empty())
                 .subscribe();
