@@ -1,11 +1,14 @@
 package com.bank.poalim.order_service.controller;
 
-import com.bank.poalim.order_service.dto.CreateOrderRequestDto;
-import com.bank.poalim.order_service.dto.OrderItemDto;
-import com.bank.poalim.order_service.dto.OrderResponseDto;
-import com.bank.poalim.order_service.model.OrderItemCategory;
-import com.bank.poalim.order_service.service.OrderService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -13,13 +16,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.bank.poalim.order_service.dto.CreateOrderRequestDto;
+import com.bank.poalim.order_service.dto.OrderItemDto;
+import com.bank.poalim.order_service.dto.OrderResponseDto;
+import com.bank.poalim.order_service.model.OrderItemCategory;
+import com.bank.poalim.order_service.service.OrderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
