@@ -40,7 +40,7 @@ public class InventoryValidationService {
                 orderApproved = false;
                 // Add issue for unavailable items
                 issues.add(InventoryCheckResult.ValidationIssue.builder()
-                        .productId(item.productId())
+                        .productId(item.getProductId())
                         .reason(getIssueReason(validatedItem))
                         .type(getIssueType(validatedItem))
                         .build());
@@ -71,7 +71,7 @@ public class InventoryValidationService {
     }
     
     private InventoryCheckResult.ValidatedItem validateItem(OrderItemDto item) {
-        return productCatalogService.findProduct(item.productId())
+        return productCatalogService.findProduct(item.getProductId())
                 .map(product -> validateProductAvailability(product, item))
                 .orElse(createNotFoundValidatedItem(item));
     }
@@ -81,8 +81,8 @@ public class InventoryValidationService {
         
         if (!product.isActive()) {
             return InventoryCheckResult.ValidatedItem.builder()
-                    .productId(item.productId())
-                    .requestedQuantity(item.quantity())
+                    .productId(item.getProductId())
+                    .requestedQuantity(item.getQuantity())
                     .availableQuantity(0)
                     .category(product.getCategory())
                     .available(false)
@@ -91,13 +91,13 @@ public class InventoryValidationService {
         
         switch (product.getCategory()) {
             case STANDARD:
-                available = product.getAvailableQuantity() >= item.quantity();
+                available = product.getAvailableQuantity() >= item.getQuantity();
                 break;
                 
             case PERISHABLE:
                 boolean notExpired = product.getExpirationDate() != null && 
                                    product.getExpirationDate().isAfter(LocalDate.now());
-                boolean sufficientQuantity = product.getAvailableQuantity() >= item.quantity();
+                boolean sufficientQuantity = product.getAvailableQuantity() >= item.getQuantity();
                 available = notExpired && sufficientQuantity;
                 break;
                 
@@ -111,8 +111,8 @@ public class InventoryValidationService {
         }
         
         return InventoryCheckResult.ValidatedItem.builder()
-                .productId(item.productId())
-                .requestedQuantity(item.quantity())
+                .productId(item.getProductId())
+                .requestedQuantity(item.getQuantity())
                 .availableQuantity(product.getAvailableQuantity())
                 .category(product.getCategory())
                 .available(available)
@@ -121,8 +121,8 @@ public class InventoryValidationService {
     
     private InventoryCheckResult.ValidatedItem createNotFoundValidatedItem(OrderItemDto item) {
         return InventoryCheckResult.ValidatedItem.builder()
-                .productId(item.productId())
-                .requestedQuantity(item.quantity())
+                .productId(item.getProductId())
+                .requestedQuantity(item.getQuantity())
                 .availableQuantity(0)
                 .category(null)
                 .available(false)

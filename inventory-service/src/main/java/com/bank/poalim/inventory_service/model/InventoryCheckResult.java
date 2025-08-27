@@ -1,15 +1,15 @@
 package com.bank.poalim.inventory_service.model;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Value;
 
-@Value
+import java.util.List;
+
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class InventoryCheckResult {
     private String orderId;

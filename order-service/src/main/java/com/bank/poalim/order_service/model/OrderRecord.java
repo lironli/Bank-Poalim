@@ -1,17 +1,18 @@
 package com.bank.poalim.order_service.model;
 
+import com.bank.poalim.order_service.dto.OrderItemDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
-import com.bank.poalim.order_service.dto.OrderItemDto;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Value;
-
-@Value
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class OrderRecord implements Serializable {
     private String orderId;

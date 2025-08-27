@@ -23,7 +23,7 @@ public class NotificationServiceImpl implements NotificationService{
 	@Override
 	public void processInventoryCheckResult(InventoryCheckResult inventoryCheckResult) {
 		
-		String orderId = inventoryCheckResult.orderId();
+		String orderId = inventoryCheckResult.getOrderId();
 	
 		log.info("Retrieve the original order from Redis using the orderId");
 		
@@ -37,10 +37,10 @@ public class NotificationServiceImpl implements NotificationService{
 			log.error("Failed to delete order {}", orderId);
 		}
 		
-		if(inventoryCheckResult.approved()) {
+		if(inventoryCheckResult.getApproved()) {
 			log.info("Order {} Confirmed!", orderId);
 		} else {
-			List<MissingItem> missingItems = inventoryCheckResult.missingItems();
+			List<MissingItem> missingItems = inventoryCheckResult.getMissingItems();
 			log.info("Order {} Rejected due to missing items: {}", orderId, missingItems);
 		}
 		

@@ -1,7 +1,10 @@
 package com.bank.poalim.inventory_service.model;
 
-public record OrderItemDto (
-    String productId,
-    Integer quantity,
-    OrderItemCategory category
-) {}
+import lombok.Data;
+
+@Data
+public class OrderItemDto {
+    private String productId;
+    private Integer quantity;
+    private OrderItemCategory category;
+}

@@ -38,26 +38,23 @@ class OrderControllerTest {
     @Test
     void createOrder_ValidRequest_ReturnsCreatedOrder() throws Exception {
         // Given
-    	OrderItemDto item = new OrderItemDto(
-        	"P1001",
-        	2,
-        	OrderItemCategory.STANDARD
-        );
-    	
-    	CreateOrderRequestDto request = new CreateOrderRequestDto(
-        	"Alice",
-        	List.of(item),
-        	Instant.parse("2025-06-30T14:00:00Z")
-        );
+        CreateOrderRequestDto request = new CreateOrderRequestDto();
+        request.setCustomerName("Alice");
+        request.setRequestedAt(Instant.parse("2025-06-30T14:00:00Z"));
         
-        OrderResponseDto response = OrderResponseDto.builder()
-        	.orderId("test-order-id")
-        	.customerName("Alice")
-        	.items(request.items())
-        	.requestedAt(request.requestedAt())
-        	.createdAt(Instant.now())
-        	.status("CREATED")
-        	.build();
+        OrderItemDto item = new OrderItemDto();
+        item.setProductId("P1001");
+        item.setQuantity(2);
+        item.setCategory(OrderItemCategory.STANDARD);
+        request.setItems(List.of(item));
+        
+        OrderResponseDto response = new OrderResponseDto();
+        response.setOrderId("test-order-id");
+        response.setCustomerName("Alice");
+        response.setItems(request.getItems());
+        response.setRequestedAt(request.getRequestedAt());
+        response.setCreatedAt(Instant.now());
+        response.setStatus("CREATED");
         
         when(orderService.createOrder(any(CreateOrderRequestDto.class))).thenReturn(response);
         
@@ -74,7 +71,7 @@ class OrderControllerTest {
     @Test
     void createOrder_InvalidRequest_ReturnsBadRequest() throws Exception {
         // Given
-        CreateOrderRequestDto request = new CreateOrderRequestDto(null, null, null);
+        CreateOrderRequestDto request = new CreateOrderRequestDto();
         // Missing required fields
         
         // When & Then

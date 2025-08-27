@@ -49,18 +49,15 @@ class OrderServiceImplTest {
     @Test
     void createOrder_ValidRequest_SavesPendingAndPublishesEvent() {
         // Given
+        CreateOrderRequestDto request = new CreateOrderRequestDto();
+        request.setCustomerName("Alice");
+        request.setRequestedAt(Instant.parse("2025-06-30T14:00:00Z"));
         
-        OrderItemDto item = new OrderItemDto(
-        	"P1001",
-        	2,
-        	OrderItemCategory.STANDARD
-        );
-        
-        CreateOrderRequestDto request = new CreateOrderRequestDto(
-            	"Alice",
-            	List.of(item),
-            	Instant.parse("2025-06-30T14:00:00Z")
-            );
+        OrderItemDto item = new OrderItemDto();
+        item.setProductId("P1001");
+        item.setQuantity(2);
+        item.setCategory(OrderItemCategory.STANDARD);
+        request.setItems(List.of(item));
         
         when(orderEventProducer.publishOrderCreatedEvent(any(OrderCreatedEvent.class)))
                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -70,15 +67,15 @@ class OrderServiceImplTest {
         
         // Then
         assertNotNull(response);
-        assertNotNull(response.orderId());
-        assertEquals("Alice", response.customerName());
-        assertEquals("PENDING", response.status());
-        assertNotNull(response.createdAt());
+        assertNotNull(response.getOrderId());
+        assertEquals("Alice", response.getCustomerName());
+        assertEquals("PENDING", response.getStatus());
+        assertNotNull(response.getCreatedAt());
         
         // Verify pending save
         verify(pendingOrderStore).savePending(recordCaptor.capture());
         OrderRecord saved = recordCaptor.getValue();
-        assertEquals(response.orderId(), saved.getOrderId());
+        assertEquals(response.getOrderId(), saved.getOrderId());
         assertEquals("Alice", saved.getCustomerName());
         assertNotNull(saved.getStatus());
         
@@ -86,7 +83,7 @@ class OrderServiceImplTest {
         verify(orderEventProducer).publishOrderCreatedEvent(eventCaptor.capture());
         OrderCreatedEvent capturedEvent = eventCaptor.getValue();
         
-        assertEquals(response.orderId(), capturedEvent.getOrderId());
+        assertEquals(response.getOrderId(), capturedEvent.getOrderId());
         assertEquals("Alice", capturedEvent.getCustomerName());
         assertEquals("CREATED", capturedEvent.getStatus());
         assertEquals("ORDER_CREATED", capturedEvent.getEventType());
@@ -96,19 +93,15 @@ class OrderServiceImplTest {
     @Test
     void createOrder_KafkaPublishFails_StillReturnsPendingAndSaves() {
         // Given
-    	
-    	OrderItemDto item = new OrderItemDto(
-        	"P1001",
-        	2,
-        	OrderItemCategory.DIGITAL
-        );
+        CreateOrderRequestDto request = new CreateOrderRequestDto();
+        request.setCustomerName("Alice");
+        request.setRequestedAt(Instant.parse("2025-06-30T14:00:00Z"));
         
-        CreateOrderRequestDto request = new CreateOrderRequestDto(
-        	"Alice",
-        	List.of(item),
-        	Instant.parse("2025-06-30T14:00:00Z")
-        );
-        
+        OrderItemDto item = new OrderItemDto();
+        item.setProductId("P1001");
+        item.setQuantity(2);
+        item.setCategory(OrderItemCategory.DIGITAL);
+        request.setItems(List.of(item));
         
         when(orderEventProducer.publishOrderCreatedEvent(any(OrderCreatedEvent.class)))
                 .thenThrow(new RuntimeException("Kafka connection failed"));
@@ -118,9 +111,9 @@ class OrderServiceImplTest {
         
         // Then
         assertNotNull(response);
-        assertNotNull(response.orderId());
-        assertEquals("Alice", response.customerName());
-        assertEquals("PENDING", response.status());
+        assertNotNull(response.getOrderId());
+        assertEquals("Alice", response.getCustomerName());
+        assertEquals("PENDING", response.getStatus());
         
         // Verify pending save attempted
         verify(pendingOrderStore).savePending(any(OrderRecord.class));

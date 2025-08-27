@@ -21,27 +21,27 @@ public class OrderEventsListener {
     @KafkaListener(topics = "${kafka.topic.order-created:order-created}", containerFactory = "orderKafkaListenerContainerFactory")
     public void onOrderCreated(@Payload OrderCreatedEvent event) {
         log.info("Inventory received OrderCreatedEvent id={} items={} status={}",
-                event.orderId(),
-                event.items() != null ? event.items().size() : 0,
-                event.status());
+                event.getOrderId(),
+                event.getItems() != null ? event.getItems().size() : 0,
+                event.getStatus());
         
         try {
             // Validate order availability
             InventoryCheckResult validationResult = inventoryValidationService.validateOrder(
-                    event.orderId(), 
-                    event.items()
+                    event.getOrderId(), 
+                    event.getItems()
             );
             
             if (validationResult.isApproved()) {
                 // Update inventory for approved orders
 //                inventoryValidationService.updateInventoryForApprovedOrder(validationResult);
-                log.info("Order {} completed processing - Order approved and inventory updated", event.orderId());
+                log.info("Order {} completed processing - Order approved and inventory updated", event.getOrderId());
             } else {
-                log.warn("Order {} completed processing - Order rejected and inventory remains unchanged", event.orderId());
+                log.warn("Order {} completed processing - Order rejected and inventory remains unchanged", event.getOrderId());
             }
             
         } catch (Exception e) {
-            log.error("Error processing order {}: {}", event.orderId(), e.getMessage(), e);
+            log.error("Error processing order {}: {}", event.getOrderId(), e.getMessage(), e);
         }
     }
 }

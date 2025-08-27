@@ -1,16 +1,17 @@
 package com.bank.poalim.order_service.event;
 
+import com.bank.poalim.order_service.dto.OrderItemDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.Instant;
 import java.util.List;
 
-import com.bank.poalim.order_service.dto.OrderItemDto;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Value;
-
-@Value
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class OrderCreatedEvent {
     

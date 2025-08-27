@@ -1,10 +1,5 @@
 package com.bank.poalim.order_service.service;
 
-import java.time.Instant;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import com.bank.poalim.order_service.dto.CreateOrderRequestDto;
 import com.bank.poalim.order_service.dto.OrderResponseDto;
 import com.bank.poalim.order_service.event.OrderCreatedEvent;
@@ -12,9 +7,12 @@ import com.bank.poalim.order_service.kafka.OrderEventProducer;
 import com.bank.poalim.order_service.model.OrderRecord;
 import com.bank.poalim.order_service.model.OrderStatus;
 import com.bank.poalim.order_service.store.PendingOrderStore;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +24,7 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     public OrderResponseDto createOrder(CreateOrderRequestDto request) {
-        log.info("Creating order for customer: {}", request.customerName());
+        log.info("Creating order for customer: {}", request.getCustomerName());
         
         // Generate a unique order ID
         String orderId = UUID.randomUUID().toString();
@@ -35,31 +33,30 @@ public class OrderServiceImpl implements OrderService {
         // Save PENDING order in Redis
         OrderRecord record = OrderRecord.builder()
                 .orderId(orderId)
-                .customerName(request.customerName())
-                .items(request.items())
-                .requestedAt(request.requestedAt())
+                .customerName(request.getCustomerName())
+                .items(request.getItems())
+                .requestedAt(request.getRequestedAt())
                 .createdAt(createdAt)
                 .status(OrderStatus.PENDING)
                 .build();
         pendingOrderStore.savePending(record);
                 
         // Create the response (reflect current PENDING status)
-        OrderResponseDto response = OrderResponseDto.builder()
-        		.orderId(orderId)
-        		.customerName(request.customerName())
-        		.items(request.items())
-        		.requestedAt(request.requestedAt())
-        		.createdAt(createdAt)
-        		.status("PENDING")
-        		.build();
+        OrderResponseDto response = new OrderResponseDto();
+        response.setOrderId(orderId);
+        response.setCustomerName(request.getCustomerName());
+        response.setItems(request.getItems());
+        response.setRequestedAt(request.getRequestedAt());
+        response.setCreatedAt(createdAt);
+        response.setStatus("PENDING");
         
         // Publish order created event to Kafka
         try {
             OrderCreatedEvent event = OrderCreatedEvent.builder()
                     .orderId(orderId)
-                    .customerName(request.customerName())
-                    .items(request.items())
-                    .requestedAt(createdAt.isAfter(request.requestedAt()) ? request.requestedAt() : request.requestedAt())
+                    .customerName(request.getCustomerName())
+                    .items(request.getItems())
+                    .requestedAt(createdAt.isAfter(request.getRequestedAt()) ? request.getRequestedAt() : request.getRequestedAt())
                     .createdAt(createdAt)
                     .status("CREATED")
                     .build();

@@ -1,6 +1,9 @@
 package com.bank.poalim.notification_service.model;
 
-public record MissingItem (
-	String productId,
-    String reason
-) {}
+import lombok.Data;
+
+@Data
+public class MissingItem {
+	private String productId;
+    private String reason;
+}

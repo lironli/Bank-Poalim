@@ -7,10 +7,12 @@ import com.bank.poalim.inventory_service.model.ValidationMissingItem;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class InventoryCheckResultEvent {
     
