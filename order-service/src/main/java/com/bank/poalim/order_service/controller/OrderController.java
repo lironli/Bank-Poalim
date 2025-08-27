@@ -20,7 +20,7 @@ public class OrderController {
     
     @PostMapping
     public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody CreateOrderRequestDto request) {
-        log.info("Received order creation request for customer: {}", request.getCustomerName());
+        log.info("Received order creation request for customer: {}", request.customerName());
         
         OrderResponseDto response = orderService.createOrder(request);
         

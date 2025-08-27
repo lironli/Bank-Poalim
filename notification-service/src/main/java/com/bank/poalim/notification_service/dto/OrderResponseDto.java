@@ -1,17 +1,15 @@
 package com.bank.poalim.notification_service.dto;
 
-import lombok.Data;
-
 import java.time.Instant;
 import java.util.List;
 
-@Data
-public class OrderResponseDto {
+public record OrderResponseDto (
     
-    private String orderId;
-    private String customerName;
-    private List<OrderItemDto> items;
-    private Instant requestedAt;
-    private Instant createdAt;
-    private String status;
-}
+    String orderId,
+    String customerName,
+    List<OrderItemDto> items,
+    Instant requestedAt,
+    Instant createdAt,
+    String status
+
+) {}
