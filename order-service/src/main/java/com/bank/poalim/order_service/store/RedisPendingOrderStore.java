@@ -29,6 +29,6 @@ public class RedisPendingOrderStore implements PendingOrderStore {
     }
     
     private String key(String orderId) {
-        return "order:pending:" + orderId;
+        return "order:" + orderId;
     }
 }

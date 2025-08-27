@@ -32,19 +32,21 @@ public class NotificationServiceImpl implements NotificationService{
 		log.info("Retrieved order: {}", savedOrder);
 
 		if (savedOrder != null) {
-			// Update the order status to COMPLETED instead of deleting
+			// Update the order status to COMPLETED or REJECTED based on approval
+			OrderStatus newStatus = inventoryCheckResult.getApproved() ? OrderStatus.COMPLETED : OrderStatus.REJECTED;
+			
 			OrderRecord updatedOrder = OrderRecord.builder()
 					.orderId(savedOrder.getOrderId())
 					.customerName(savedOrder.getCustomerName())
 					.items(savedOrder.getItems())
 					.requestedAt(savedOrder.getRequestedAt())
 					.createdAt(savedOrder.getCreatedAt())
-					.status(OrderStatus.COMPLETED)  // Change status to COMPLETED
+					.status(newStatus)  // Set status based on approval
 					.build();
 			
 			Boolean updated = orderStore.updateOrderStatus(updatedOrder).block();
 			if (Boolean.TRUE.equals(updated)) {
-				log.info("Successfully updated order {} status to COMPLETED", orderId);
+				log.info("Successfully updated order {} status to {}", orderId, newStatus);
 			} else {
 				log.error("Failed to update order {} status", orderId);
 			}

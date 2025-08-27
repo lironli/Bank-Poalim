@@ -40,6 +40,6 @@ public class RedisOrderStore implements OrderStore {
 	}
 	
 	private String key(String orderId) {
-        return "order:pending:" + orderId;
+        return "order:" + orderId;
     }
 }
