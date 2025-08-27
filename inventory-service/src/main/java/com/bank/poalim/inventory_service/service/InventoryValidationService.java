@@ -65,6 +65,8 @@ public class InventoryValidationService {
             }
         }
         
+        publishInvenoryCheckResultEvent(result);
+        
         return result;
     }
     
