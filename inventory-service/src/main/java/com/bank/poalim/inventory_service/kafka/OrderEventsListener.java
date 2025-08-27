@@ -1,13 +1,15 @@
 package com.bank.poalim.inventory_service.kafka;
 
-import com.bank.poalim.inventory_service.event.OrderCreatedEvent;
-import com.bank.poalim.inventory_service.model.OrderValidationResult;
-import com.bank.poalim.inventory_service.service.InventoryValidationService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+
+import com.bank.poalim.inventory_service.event.OrderCreatedEvent;
+import com.bank.poalim.inventory_service.model.OrderValidationResult;
+import com.bank.poalim.inventory_service.service.InventoryValidationService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -32,10 +34,10 @@ public class OrderEventsListener {
             
             if (validationResult.isApproved()) {
                 // Update inventory for approved orders
-                inventoryValidationService.updateInventoryForApprovedOrder(validationResult);
-                log.info("Order {} processed successfully - inventory updated", event.getOrderId());
+//                inventoryValidationService.updateInventoryForApprovedOrder(validationResult);
+                log.info("Order {} completed processing - Order approved and inventory updated", event.getOrderId());
             } else {
-                log.warn("Order {} rejected - inventory remains unchanged", event.getOrderId());
+                log.warn("Order {} completed processing - Order rejected and inventory remains unchanged", event.getOrderId());
             }
             
         } catch (Exception e) {

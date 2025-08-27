@@ -1,3 +1,6 @@
+compose_build:
+	docker compose build
+
 compose_up:
 	docker compose up -d
 

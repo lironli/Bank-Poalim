@@ -29,8 +29,8 @@ public class OrderServiceImpl implements OrderService {
         // Generate a unique order ID
         String orderId = UUID.randomUUID().toString();
         Instant createdAt = Instant.now();
-        
-        // Save PENDING order in Redis with TTL
+                
+        // Save PENDING order in Redis
         OrderRecord record = OrderRecord.builder()
                 .orderId(orderId)
                 .customerName(request.getCustomerName())
@@ -40,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
                 .status(OrderStatus.PENDING)
                 .build();
         pendingOrderStore.savePending(record);
-        
+                
         // Create the response (reflect current PENDING status)
         OrderResponseDto response = new OrderResponseDto();
         response.setOrderId(orderId);
@@ -49,8 +49,6 @@ public class OrderServiceImpl implements OrderService {
         response.setRequestedAt(request.getRequestedAt());
         response.setCreatedAt(createdAt);
         response.setStatus("PENDING");
-        
-        log.info("Order saved as PENDING with ID: {}", orderId);
         
         // Publish order created event to Kafka
         try {
@@ -67,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
             log.info("Order created event published to Kafka for order ID: {}", orderId);
         } catch (Exception e) {
             log.error("Failed to publish order created event to Kafka for order ID: {}", orderId, e);
-            // order remains PENDING in Redis until it expires or is processed via retry
+            // order remains PENDING in Redis, Ideally we should have a retry mechanism to publish the event again
         }
         
         return response;

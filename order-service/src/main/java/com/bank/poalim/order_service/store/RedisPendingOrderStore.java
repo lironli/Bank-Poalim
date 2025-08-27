@@ -1,13 +1,13 @@
 package com.bank.poalim.order_service.store;
 
-import com.bank.poalim.order_service.model.OrderRecord;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
+import com.bank.poalim.order_service.model.OrderRecord;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +25,7 @@ public class RedisPendingOrderStore implements PendingOrderStore {
                 .doOnError(err -> log.error("Failed to save pending order {}", orderRecord.getOrderId(), err))
                 .onErrorResume(e -> Mono.empty())
                 .subscribe();
+        
     }
     
     private String key(String orderId) {

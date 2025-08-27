@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  zookeeper:
+    image: bitnami/zookeeper:3.7
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD", "zookeeper-shell", "localhost:2181", "ruok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   kafka:
     image: bitnami/kafka:3.7
     container_name: kafka
@@ -32,3 +43,27 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+  order-service:
+    build: ./order-service
+    depends_on:
+      - kafka
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_REDIS_HOST: redis
+    ports:
+      - "8081:8080"
+
+  inventory-service:
+    build: ./inventory-service
+    depends_on:
+      - kafka
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_REDIS_HOST: redis
+    ports:
+      - "8082:8080"
