@@ -13,7 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-import com.bank.poalim.inventory_service.event.OrderValidationEvent;
+import com.bank.poalim.inventory_service.event.InventoryCheckResultEvent;
 
 @Configuration
 public class KafkaProducerConfig {
@@ -22,7 +22,7 @@ public class KafkaProducerConfig {
     private String bootstrapServers;
     
     @Bean
-    public ProducerFactory<String, OrderValidationEvent> producerFactory() {
+    public ProducerFactory<String, InventoryCheckResultEvent> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -36,7 +36,7 @@ public class KafkaProducerConfig {
     }
     
     @Bean
-    public KafkaTemplate<String, OrderValidationEvent> kafkaTemplate() {
+    public KafkaTemplate<String, InventoryCheckResultEvent> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
     

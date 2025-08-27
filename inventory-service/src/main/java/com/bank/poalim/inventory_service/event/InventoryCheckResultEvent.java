@@ -14,13 +14,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderValidationEvent {
+public class InventoryCheckResultEvent {
     
     private String orderId;
     private List<ValidationMissingItem> missingItems;
     private Boolean approved;
     @Builder.Default
-    private String eventType = "ORDER_VALIDATION";
+    private String eventType = "INVENTORY_CHECK_RESULT";
     @Builder.Default
     private Instant eventTimestamp = Instant.now();
     

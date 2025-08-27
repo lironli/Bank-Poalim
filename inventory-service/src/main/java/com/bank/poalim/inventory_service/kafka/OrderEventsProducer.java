@@ -1,6 +1,6 @@
 package com.bank.poalim.inventory_service.kafka;
 
-import com.bank.poalim.inventory_service.event.OrderValidationEvent;
+import com.bank.poalim.inventory_service.event.InventoryCheckResultEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,22 +15,22 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class OrderEventsProducer {
     
-    private final KafkaTemplate<String, OrderValidationEvent> kafkaTemplate;
+    private final KafkaTemplate<String, InventoryCheckResultEvent> kafkaTemplate;
     
-    @Value("${kafka.topic.order-validation:order-validation}")
-    private String orderValidationTopic;
+    @Value("${kafka.topic.inventory-check:inventory-check-result}")
+    private String inventoryCheckResultTopic;
     
-    public CompletableFuture<SendResult<String, OrderValidationEvent>> publishOrderValidationEvent(OrderValidationEvent event) {
-        log.info("Publishing order Validation result event to topic '{}': {}", orderValidationTopic, event.getOrderId());
+    public CompletableFuture<SendResult<String, InventoryCheckResultEvent>> publishInventoryCheckResultEvent(InventoryCheckResultEvent event) {
+        log.info("Publishing inventory check result event to topic '{}': {}", inventoryCheckResultTopic, event.getOrderId());
         
-        return kafkaTemplate.send(orderValidationTopic, event.getOrderId(), event)
+        return kafkaTemplate.send(inventoryCheckResultTopic, event.getOrderId(), event)
                 .whenComplete((result, throwable) -> {
                     if (throwable == null) {
-                        log.info("Order validation result event published successfully to topic '{}' with key '{}' at partition {} offset {}",
-                                orderValidationTopic, event.getOrderId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                        log.info("Inventory check result  event published successfully to topic '{}' with key '{}' at partition {} offset {}",
+                                inventoryCheckResultTopic, event.getOrderId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
                     } else {
-                        log.error("Failed to publish order validation result event to topic '{}' with key '{}'", 
-                                orderValidationTopic, event.getOrderId(), throwable);
+                        log.error("Failed to publish inventory check result event to topic '{}' with key '{}'", 
+                                inventoryCheckResultTopic, event.getOrderId(), throwable);
                     }
                 });
     }
