@@ -8,6 +8,6 @@ public interface OrderStore {
     
 	Mono<OrderRecord> getOrderById(String orderId);
 	
-	Mono<OrderRecord> retrieveAndDeleteOrder(String orderId);
+	Mono<Boolean> deleteOrder(String orderId);
 	
 }

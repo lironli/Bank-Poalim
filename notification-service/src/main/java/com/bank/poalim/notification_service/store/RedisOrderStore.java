@@ -23,19 +23,10 @@ public class RedisOrderStore implements OrderStore {
 	}
 	
 	@Override
-	public Mono<OrderRecord> retrieveAndDeleteOrder(String orderId) {
+	public Mono<Boolean> deleteOrder(String orderId) {
 	    String redisKey = key(orderId);
 
-	    return orderReactiveRedisTemplate.opsForValue()
-	            .get(redisKey)
-	            .flatMap(order -> {
-	                log.info("Retrieved order from Redis: {}", order);
-	                // delete the order after logging
-	                return orderReactiveRedisTemplate.opsForValue()
-	                        .delete(redisKey)
-	                        .doOnNext(deleted -> log.info("Order {} deleted from Redis: {}", orderId, deleted))
-	                        .thenReturn(order); // return the retrieved order
-	            });
+	    return orderReactiveRedisTemplate.opsForValue().delete(redisKey);
 	}
 	
 	private String key(String orderId) {
