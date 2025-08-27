@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.bank.poalim.inventory_service.event.OrderValidationEvent;
+import com.bank.poalim.inventory_service.event.InventoryCheckResultEvent;
 import com.bank.poalim.inventory_service.kafka.OrderEventsProducer;
 import com.bank.poalim.inventory_service.model.OrderItemCategory;
 import com.bank.poalim.inventory_service.model.OrderItemDto;
-import com.bank.poalim.inventory_service.model.OrderValidationResult;
+import com.bank.poalim.inventory_service.model.InventoryCheckResult;
 import com.bank.poalim.inventory_service.model.Product;
 import com.bank.poalim.inventory_service.model.ValidationMissingItem;
 
@@ -25,21 +25,21 @@ public class InventoryValidationService {
     private final ProductCatalogService productCatalogService;
     private final OrderEventsProducer orderEventProducer;
     
-    public OrderValidationResult validateOrder(String orderId, List<OrderItemDto> items) {
+    public InventoryCheckResult validateOrder(String orderId, List<OrderItemDto> items) {
         log.info("Validating order {} with {} items", orderId, items.size());
         
-        List<OrderValidationResult.ValidationIssue> issues = new ArrayList<>();
-        List<OrderValidationResult.ValidatedItem> validatedItems = new ArrayList<>();
+        List<InventoryCheckResult.ValidationIssue> issues = new ArrayList<>();
+        List<InventoryCheckResult.ValidatedItem> validatedItems = new ArrayList<>();
         boolean orderApproved = true;
         
         for (OrderItemDto item : items) {
-            OrderValidationResult.ValidatedItem validatedItem = validateItem(item);
+            InventoryCheckResult.ValidatedItem validatedItem = validateItem(item);
             validatedItems.add(validatedItem);
             
             if (!validatedItem.isAvailable()) {
                 orderApproved = false;
                 // Add issue for unavailable items
-                issues.add(OrderValidationResult.ValidationIssue.builder()
+                issues.add(InventoryCheckResult.ValidationIssue.builder()
                         .productId(item.getProductId())
                         .reason(getIssueReason(validatedItem))
                         .type(getIssueType(validatedItem))
@@ -47,7 +47,7 @@ public class InventoryValidationService {
             }
         }
         
-        OrderValidationResult result = OrderValidationResult.builder()
+        InventoryCheckResult result = InventoryCheckResult.builder()
                 .orderId(orderId)
                 .approved(orderApproved)
                 .issues(issues)
@@ -60,7 +60,7 @@ public class InventoryValidationService {
             updateInventoryForApprovedOrder(result);
         } else {
             log.warn("Order {} REJECTED - {} issues found", orderId, issues.size());
-            for (OrderValidationResult.ValidationIssue issue : issues) {
+            for (InventoryCheckResult.ValidationIssue issue : issues) {
                 log.warn("Issue: Product {} - {}", issue.getProductId(), issue.getReason());
             }
         }
@@ -68,17 +68,17 @@ public class InventoryValidationService {
         return result;
     }
     
-    private OrderValidationResult.ValidatedItem validateItem(OrderItemDto item) {
+    private InventoryCheckResult.ValidatedItem validateItem(OrderItemDto item) {
         return productCatalogService.findProduct(item.getProductId())
                 .map(product -> validateProductAvailability(product, item))
                 .orElse(createNotFoundValidatedItem(item));
     }
     
-    private OrderValidationResult.ValidatedItem validateProductAvailability(Product product, OrderItemDto item) {
+    private InventoryCheckResult.ValidatedItem validateProductAvailability(Product product, OrderItemDto item) {
         boolean available = false;
         
         if (!product.isActive()) {
-            return OrderValidationResult.ValidatedItem.builder()
+            return InventoryCheckResult.ValidatedItem.builder()
                     .productId(item.getProductId())
                     .requestedQuantity(item.getQuantity())
                     .availableQuantity(0)
@@ -108,7 +108,7 @@ public class InventoryValidationService {
                 break;
         }
         
-        return OrderValidationResult.ValidatedItem.builder()
+        return InventoryCheckResult.ValidatedItem.builder()
                 .productId(item.getProductId())
                 .requestedQuantity(item.getQuantity())
                 .availableQuantity(product.getAvailableQuantity())
@@ -117,8 +117,8 @@ public class InventoryValidationService {
                 .build();
     }
     
-    private OrderValidationResult.ValidatedItem createNotFoundValidatedItem(OrderItemDto item) {
-        return OrderValidationResult.ValidatedItem.builder()
+    private InventoryCheckResult.ValidatedItem createNotFoundValidatedItem(OrderItemDto item) {
+        return InventoryCheckResult.ValidatedItem.builder()
                 .productId(item.getProductId())
                 .requestedQuantity(item.getQuantity())
                 .availableQuantity(0)
@@ -127,7 +127,7 @@ public class InventoryValidationService {
                 .build();
     }
     
-    private String getIssueReason(OrderValidationResult.ValidatedItem validatedItem) {
+    private String getIssueReason(InventoryCheckResult.ValidatedItem validatedItem) {
         if (validatedItem.getCategory() == null) {
             return "Product not found in catalog";
         }
@@ -145,24 +145,24 @@ public class InventoryValidationService {
         }
     }
     
-    private OrderValidationResult.ValidationIssueType getIssueType(OrderValidationResult.ValidatedItem validatedItem) {
+    private InventoryCheckResult.ValidationIssueType getIssueType(InventoryCheckResult.ValidatedItem validatedItem) {
         if (validatedItem.getCategory() == null) {
-            return OrderValidationResult.ValidationIssueType.PRODUCT_NOT_FOUND;
+            return InventoryCheckResult.ValidationIssueType.PRODUCT_NOT_FOUND;
         }
         
         switch (validatedItem.getCategory()) {
             case STANDARD:
-                return OrderValidationResult.ValidationIssueType.INSUFFICIENT_QUANTITY;
+                return InventoryCheckResult.ValidationIssueType.INSUFFICIENT_QUANTITY;
             case PERISHABLE:
-                return OrderValidationResult.ValidationIssueType.EXPIRED_PRODUCT;
+                return InventoryCheckResult.ValidationIssueType.EXPIRED_PRODUCT;
             case DIGITAL:
-                return OrderValidationResult.ValidationIssueType.PRODUCT_INACTIVE;
+                return InventoryCheckResult.ValidationIssueType.PRODUCT_INACTIVE;
             default:
-                return OrderValidationResult.ValidationIssueType.INVALID_CATEGORY;
+                return InventoryCheckResult.ValidationIssueType.INVALID_CATEGORY;
         }
     }
     
-    public void updateInventoryForApprovedOrder(OrderValidationResult validationResult) {
+    public void updateInventoryForApprovedOrder(InventoryCheckResult validationResult) {
         if (!validationResult.isApproved()) {
             log.warn("Attempted to update inventory for rejected order: {}", validationResult.getOrderId());
             return;
@@ -170,7 +170,7 @@ public class InventoryValidationService {
         
         log.info("Updating inventory for approved order: {}", validationResult.getOrderId());
         
-        for (OrderValidationResult.ValidatedItem item : validationResult.getValidatedItems()) {
+        for (InventoryCheckResult.ValidatedItem item : validationResult.getValidatedItems()) {
             if (item.isAvailable() && item.getCategory() != OrderItemCategory.DIGITAL) {
                 // For digital products, we don't decrement inventory
                 int newQuantity = item.getAvailableQuantity() - item.getRequestedQuantity();
@@ -181,7 +181,7 @@ public class InventoryValidationService {
         }
     }
     
-    public void publishOrderValidationEvent(OrderValidationResult result) {
+    public void publishInvenoryCheckResultEvent(InventoryCheckResult result) {
     	
     	try {
     		
@@ -194,17 +194,17 @@ public class InventoryValidationService {
         	
         	
         	
-        	OrderValidationEvent event = OrderValidationEvent.builder()
+        	InventoryCheckResultEvent event = InventoryCheckResultEvent.builder()
                     .orderId(result.getOrderId())
                     .missingItems(validationMissingItems.isEmpty() ? null : validationMissingItems)
                     .approved(result.isApproved()? true : false)
                     .build();
         	
-        	orderEventProducer.publishOrderValidationEvent(event);
-            log.info("Order validation result event published to Kafka for order ID: {}", result.getOrderId());
+        	orderEventProducer.publishInventoryCheckResultEvent(event);
+            log.info("Inventory check result event published to Kafka for order ID: {}", result.getOrderId());
         	
     	} catch (Exception e) {
-            log.error("Failed to publish order validation result event to Kafka for order ID: {}", result.getOrderId(), e);
+            log.error("Failed to publish inventory check result event to Kafka for order ID: {}", result.getOrderId(), e);
             // Ideally we should have a retry mechanism to publish the event again
         }
     	

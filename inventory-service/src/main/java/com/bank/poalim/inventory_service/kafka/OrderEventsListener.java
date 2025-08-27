@@ -5,7 +5,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import com.bank.poalim.inventory_service.event.OrderCreatedEvent;
-import com.bank.poalim.inventory_service.model.OrderValidationResult;
+import com.bank.poalim.inventory_service.model.InventoryCheckResult;
 import com.bank.poalim.inventory_service.service.InventoryValidationService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class OrderEventsListener {
         
         try {
             // Validate order availability
-            OrderValidationResult validationResult = inventoryValidationService.validateOrder(
+            InventoryCheckResult validationResult = inventoryValidationService.validateOrder(
                     event.getOrderId(), 
                     event.getItems()
             );
