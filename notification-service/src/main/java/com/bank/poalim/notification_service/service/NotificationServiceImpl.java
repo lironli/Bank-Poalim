@@ -26,9 +26,16 @@ public class NotificationServiceImpl implements NotificationService{
 		String orderId = inventoryCheckResult.getOrderId();
 	
 		log.info("Retrieve the original order from Redis using the orderId");
-		Mono<OrderRecord> savedOrder = orderStore.getOrderById(inventoryCheckResult.getOrderId());
-		savedOrder.doOnNext(order -> log.info("Retrieved order: {}", order))
-			.doOnError(e -> log.info("Failed to retrieve order {} with error: {}", orderId, e));
+		
+		OrderRecord savedOrder = orderStore.getOrderById(orderId).block();
+		log.info("Retrieved order: {}", savedOrder);
+
+		Boolean deleted = orderStore.deleteOrder(orderId).block();
+		if (Boolean.TRUE.equals(deleted)) {
+		    log.info("Successfully deleted order {}", orderId);
+		} else {
+			log.error("Failed to delete order {}", orderId);
+		}
 		
 		if(inventoryCheckResult.getApproved()) {
 			log.info("Order {} Confirmed!", orderId);
