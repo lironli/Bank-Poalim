@@ -9,16 +9,16 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.List;
 
-@Data
-public class CreateOrderRequestDto {
+public record CreateOrderRequestDto (
     
     @NotBlank(message = "Customer name is required")
-    private String customerName;
+    String customerName,
     
     @NotEmpty(message = "Order must contain at least one item")
     @Valid
-    private List<OrderItemDto> items;
+    List<OrderItemDto> items,
     
     @NotNull(message = "Request timestamp is required")
-    private Instant requestedAt;
-}
+    Instant requestedAt
+
+) {}
