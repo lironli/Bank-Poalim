@@ -1,16 +1,21 @@
 package com.bank.poalim.inventory_service.service;
 
-import com.bank.poalim.inventory_service.dto.OrderItemDto;
-import com.bank.poalim.inventory_service.model.OrderItemCategory;
-import com.bank.poalim.inventory_service.model.OrderValidationResult;
-import com.bank.poalim.inventory_service.model.Product;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.bank.poalim.inventory_service.event.OrderValidationEvent;
+import com.bank.poalim.inventory_service.kafka.OrderEventsProducer;
+import com.bank.poalim.inventory_service.model.OrderItemCategory;
+import com.bank.poalim.inventory_service.model.OrderItemDto;
+import com.bank.poalim.inventory_service.model.OrderValidationResult;
+import com.bank.poalim.inventory_service.model.Product;
+import com.bank.poalim.inventory_service.model.ValidationMissingItem;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +23,7 @@ import java.util.List;
 public class InventoryValidationService {
     
     private final ProductCatalogService productCatalogService;
+    private final OrderEventsProducer orderEventProducer;
     
     public OrderValidationResult validateOrder(String orderId, List<OrderItemDto> items) {
         log.info("Validating order {} with {} items", orderId, items.size());
@@ -50,6 +56,8 @@ public class InventoryValidationService {
         
         if (orderApproved) {
             log.info("Order {} APPROVED - all items available", orderId);
+            // Update inventory
+            updateInventoryForApprovedOrder(result);
         } else {
             log.warn("Order {} REJECTED - {} issues found", orderId, issues.size());
             for (OrderValidationResult.ValidationIssue issue : issues) {
@@ -172,4 +180,39 @@ public class InventoryValidationService {
             }
         }
     }
+    
+    public void publishOrderValidationEvent(OrderValidationResult result) {
+    	
+    	try {
+    		
+    		List<ValidationMissingItem> validationMissingItems = new ArrayList<ValidationMissingItem>();
+    		if(!result.isApproved()) {
+    			result.getIssues().forEach(i ->
+        		validationMissingItems.add(new ValidationMissingItem(i.getProductId(), i.getReason()))
+    					);
+    		}
+        	
+        	
+        	
+        	OrderValidationEvent event = OrderValidationEvent.builder()
+                    .orderId(result.getOrderId())
+                    .missingItems(validationMissingItems.isEmpty() ? null : validationMissingItems)
+                    .approved(result.isApproved()? true : false)
+                    .build();
+        	
+        	orderEventProducer.publishOrderValidationEvent(event);
+            log.info("Order validation result event published to Kafka for order ID: {}", result.getOrderId());
+        	
+    	} catch (Exception e) {
+            log.error("Failed to publish order validation result event to Kafka for order ID: {}", result.getOrderId(), e);
+            // Ideally we should have a retry mechanism to publish the event again
+        }
+    	
+    	
+    	
+    	
+    }
+    
+ 
+   
 }
