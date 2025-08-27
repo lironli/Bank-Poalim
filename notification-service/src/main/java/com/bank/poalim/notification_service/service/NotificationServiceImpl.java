@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.bank.poalim.notification_service.model.InventoryCheckResult;
 import com.bank.poalim.notification_service.model.MissingItem;
 import com.bank.poalim.notification_service.model.OrderRecord;
+import com.bank.poalim.notification_service.model.OrderStatus;
 import com.bank.poalim.notification_service.store.OrderStore;
 
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,25 @@ public class NotificationServiceImpl implements NotificationService{
 		OrderRecord savedOrder = orderStore.getOrderById(orderId).block();
 		log.info("Retrieved order: {}", savedOrder);
 
-		Boolean deleted = orderStore.deleteOrder(orderId).block();
-		if (Boolean.TRUE.equals(deleted)) {
-		    log.info("Successfully deleted order {}", orderId);
+		if (savedOrder != null) {
+			// Update the order status to COMPLETED instead of deleting
+			OrderRecord updatedOrder = OrderRecord.builder()
+					.orderId(savedOrder.getOrderId())
+					.customerName(savedOrder.getCustomerName())
+					.items(savedOrder.getItems())
+					.requestedAt(savedOrder.getRequestedAt())
+					.createdAt(savedOrder.getCreatedAt())
+					.status(OrderStatus.COMPLETED)  // Change status to COMPLETED
+					.build();
+			
+			Boolean updated = orderStore.updateOrderStatus(updatedOrder).block();
+			if (Boolean.TRUE.equals(updated)) {
+				log.info("Successfully updated order {} status to COMPLETED", orderId);
+			} else {
+				log.error("Failed to update order {} status", orderId);
+			}
 		} else {
-			log.error("Failed to delete order {}", orderId);
+			log.error("Order {} not found in Redis", orderId);
 		}
 		
 		if(inventoryCheckResult.getApproved()) {

@@ -10,4 +10,6 @@ public interface OrderStore {
 	
 	Mono<Boolean> deleteOrder(String orderId);
 	
+	Mono<Boolean> updateOrderStatus(OrderRecord orderRecord);
+	
 }

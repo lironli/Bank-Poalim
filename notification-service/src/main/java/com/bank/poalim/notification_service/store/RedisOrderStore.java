@@ -29,6 +29,16 @@ public class RedisOrderStore implements OrderStore {
 	    return orderReactiveRedisTemplate.opsForValue().delete(redisKey);
 	}
 	
+	@Override
+	public Mono<Boolean> updateOrderStatus(OrderRecord orderRecord) {
+	    String redisKey = key(orderRecord.getOrderId());
+	    
+	    return orderReactiveRedisTemplate.opsForValue()
+	            .set(redisKey, orderRecord)
+	            .map(result -> Boolean.TRUE)
+	            .onErrorReturn(Boolean.FALSE);
+	}
+	
 	private String key(String orderId) {
         return "order:pending:" + orderId;
     }
